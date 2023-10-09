@@ -4,5 +4,5 @@ __pycache__
 *.pyc
 *.swp
 *.swo
-train_result
-*outputs*
+# train_result
+# *outputs*

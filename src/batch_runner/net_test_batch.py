@@ -31,7 +31,8 @@ if __name__ == "__main__":
         default=f"./all_output/",
         help="Path to dataset directory",
     )
-    parser.add_argument("--arch", type=str, default="resnet")
+    # parser.add_argument("--arch", type=str, default="resnet")
+    parser.add_argument("--arch", type=str, default="vn_resnet")
     io_groups.add_argument("--save_plot", action="store_true")
     io_groups.add_argument("--concatenate", action="store_true")
 

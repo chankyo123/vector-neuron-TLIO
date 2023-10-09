@@ -34,10 +34,18 @@ class VN_BasicBlock1D(nn.Module):
         super(VN_BasicBlock1D, self).__init__()
         # Both self.conv1 and self.downsample layers downsample the input when stride != 1
         self.conv1 = conv3x1(in_planes, planes, stride)
-        self.bn1 = nn.BatchNorm1d(planes)
-        self.relu = nn.ReLU(inplace=True)
+        
+        # self.bn1 = nn.BatchNorm1d(planes)
+        self.bn1 = VNBatchNorm(planes, dim=3)
+                                             
+        # self.relu = nn.ReLU(inplace=True)
+        self.relu = VNLeakyReLU(planes,negative_slope=0.0)
+        
         self.conv2 = conv3x1(planes, planes * self.expansion)
-        self.bn2 = nn.BatchNorm1d(planes * self.expansion)
+        
+        # self.bn2 = nn.BatchNorm1d(planes * self.expansion)
+        self.bn2 = VNBatchNorm(planes * self.expansion, dim=3)
+        
         self.stride = stride
         self.downsample = downsample
 
@@ -268,6 +276,9 @@ class VN_ResNet1D(nn.Module):
         # print('shape of x after input_block_3 : ', x.shape)
         x = self.input_block_pool(x)
         # print('shape of x after input_block : ', x.shape)
+        # print()
+        # print(self.residual_groups)
+        # print()
         x = self.residual_groups(x)
         mean = self.output_block1(x)  # mean
         logstd = self.output_block2(x)  # covariance sigma = exp(2 * logstd)
