@@ -33,15 +33,25 @@ class VN_BasicBlock1D(nn.Module):
     def __init__(self, in_planes, planes, stride=1, downsample=None):
         super(VN_BasicBlock1D, self).__init__()
         # Both self.conv1 and self.downsample layers downsample the input when stride != 1
-        self.conv1 = conv3x1(in_planes, planes, stride)
         
+        # self.conv1 = conv3x1(in_planes, planes, stride)
+        if stride == 1:
+            self.conv1 = nn.Linear(in_planes, planes, bias=False)
+        elif stride == 2:
+            self.conv1 = nn.Linear(in_planes, planes, bias=False)
+            self.conv1_pool = nn.AvgPool1d(kernel_size=3, stride=2, padding=1)
+        else:
+            assert False
+            
         # self.bn1 = nn.BatchNorm1d(planes)
         self.bn1 = VNBatchNorm(planes, dim=3)
                                              
         # self.relu = nn.ReLU(inplace=True)
         self.relu = VNLeakyReLU(planes,negative_slope=0.0)
         
-        self.conv2 = conv3x1(planes, planes * self.expansion)
+        # print("info of conv : ", planes, planes * self.expansion, stride)
+        # self.conv2 = conv3x1(planes, planes * self.expansion)
+        self.conv2 = nn.Linear(planes, planes * self.expansion, bias=False)
         
         # self.bn2 = nn.BatchNorm1d(planes * self.expansion)
         self.bn2 = VNBatchNorm(planes * self.expansion, dim=3)
@@ -50,13 +60,29 @@ class VN_BasicBlock1D(nn.Module):
         self.downsample = downsample
 
     def forward(self, x):
+        # x = x.unsqueeze(1) #[1024, 64, 50]
         identity = x
 
-        out = self.conv1(x)
+        if self.stride == 1:
+            out = self.conv1(x.transpose(1,2))
+            out = out.transpose(1,2)
+        elif self.stride == 2:
+            out = self.conv1(x.transpose(1,2))
+            out = out.transpose(1,2)
+            out = self.conv1_pool(out)
+        else:
+            assert False
         out = self.bn1(out)
         out = self.relu(out)
 
-        out = self.conv2(out)
+        # print('shape of x before conv2 : ', out.shape)
+        
+        # out = self.conv2(out)
+        out = self.conv2(out.transpose(1,2))
+        out = out.transpose(1,2)
+        
+        # print('shape of x after conv2 : ', out.shape)
+        
         out = self.bn2(out)
 
         if self.downsample is not None:
@@ -199,7 +225,11 @@ class VN_ResNet1D(nn.Module):
         
         #after vn ()
         # 어떻게 feature size 변화되는지 확인하기 (encoding feature dimension check!)
-        self.input_block_conv  = nn.Conv1d(in_dim, self.base_plane, kernel_size=7, stride=2, padding=3, bias=False)
+
+        # self.input_block_conv  = nn.Conv1d(in_dim, self.base_plane, kernel_size=7, stride=2, padding=3, bias=False)
+        self.input_block_conv  = nn.Linear(in_dim, self.base_plane, bias=False)
+        self.input_block_conv_pool = nn.AvgPool1d(kernel_size=7, stride=2, padding=3)
+        
         self.input_block_bn = VNBatchNorm(self.base_plane, dim=4)
         self.input_block_relu = VNLeakyReLU(self.base_plane,negative_slope=0.0)
         self.input_block_pool = nn.AvgPool1d(kernel_size=3, stride=2, padding=1)
@@ -267,15 +297,19 @@ class VN_ResNet1D(nn.Module):
     def forward(self, x):
         # x = self.input_block(x)
         # print()
-        # print('shape of x before input_block : ', x.shape)
-        x = self.input_block_conv(x)
-        # print('shape of x after input_block_1 : ', x.shape)
+        # print('shape of x before input_block_conv : ', x.shape)
+        
+        # x = self.input_block_conv(x)
+        x = self.input_block_conv(x.transpose(1,2))
+        x = x.transpose(1,2)
+        x = self.input_block_conv_pool(x)
+        # print('shape of x after input_block_conv : ', x.shape)
         x = self.input_block_bn(x)
         # print('shape of x after input_block_2 : ', x.shape)
         x = self.input_block_relu(x)
-        # print('shape of x after input_block_3 : ', x.shape)
+        # print('shape of x after input_block_pool : ', x.shape)
         x = self.input_block_pool(x)
-        # print('shape of x after input_block : ', x.shape)
+        # print('shape of x after input_block_pool : ', x.shape)
         # print()
         # print(self.residual_groups)
         # print()
