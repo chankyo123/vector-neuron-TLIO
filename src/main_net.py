@@ -30,8 +30,9 @@ if __name__ == "__main__":
     # ------------------ architecture and training -----------------
     parser.add_argument("--lr", type=float, default=1e-04)
     parser.add_argument("--batch_size", type=int, default=1024)
-    parser.add_argument("--epochs", type=int, default=10000, help="max num epochs")
-    parser.add_argument("--arch", type=str, default="resnet")
+    parser.add_argument("--epochs", type=int, default=100, help="max num epochs")
+    # parser.add_argument("--arch", type=str, default="resnet")
+    parser.add_argument("--arch", type=str, default="vn_resnet")
     parser.add_argument("--cpu", action="store_true")
     parser.add_argument("--input_dim", type=int, default=6)
     parser.add_argument("--output_dim", type=int, default=3)
