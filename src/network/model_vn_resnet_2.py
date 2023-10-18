@@ -195,16 +195,21 @@ class FcBlock(nn.Module):
         self.dropout = nn.Dropout(0.5)
 
     def forward(self, x):
-        x = self.prep1.to('cuda')(x)
-        x = self.bn1.to('cuda')(x)
+        # x = self.prep1.to('cuda')(x)
+        x = self.prep1(x)
+        # x = self.bn1.to('cuda')(x)
+        x = self.bn1(x)
         x = x.view(x.size(0), -1)
-        x = self.fc1.to('cuda')(x)
+        # x = self.fc1.to('cuda')(x)
+        x = self.fc1(x)
         x = self.relu(x)
         x = self.dropout(x)
-        x = self.fc2.to('cuda')(x)
+        # x = self.fc2.to('cuda')(x)
+        x = self.fc2(x)
         x = self.relu(x)
         x = self.dropout(x)
-        x = self.fc3.to('cuda')(x)
+        # x = self.fc3.to('cuda')(x)
+        x = self.fc3(x)
         return x
 
 
@@ -333,11 +338,13 @@ class VN_ResNet1D(nn.Module):
         return sum(p.numel() for p in self.parameters() if p.requires_grad)
 
     def forward(self, x):
+        local_info = True
         # x = self.input_block(x)
-        torch.cuda.synchronize()
-        t1 = time.perf_counter()
+        # torch.cuda.synchronize()
+        # t1 = time.perf_counter()
 
-        # x = self.input_block_local_info(x)
+        if local_info == True:
+            x = self.input_block_local_info(x)
 
         torch.cuda.synchronize()
         t2 = time.perf_counter()
@@ -346,33 +353,34 @@ class VN_ResNet1D(nn.Module):
         x = x.unsqueeze(1)
         x = get_graph_feature_cross(x, k=self.n_knn)
         
-        torch.cuda.synchronize()
-        t3 = time.perf_counter()
+        # torch.cuda.synchronize()
+        # t3 = time.perf_counter()
         # print('time elapsed get_graph_feature_cross: ', abs(t3-t2))
         
         x = self.input_block_conv(torch.transpose(x,1,-1))
         x = torch.transpose(x,1,-1)
         x = self.pool(x)
-        x = self.local_pool(x,2)
+        if local_info != True:
+            x = self.local_pool(x,2)
         
-        torch.cuda.synchronize()
-        t4 = time.perf_counter()
+        # torch.cuda.synchronize()
+        # t4 = time.perf_counter()
         # print('time elapsed input_block_conv: ', abs(t3-t4))
         
-        self.input_block_bn.to('cuda')
+        # self.input_block_bn.to('cuda')
         x = self.input_block_bn(x)
         
-        self.input_block_relu.to('cuda')
+        # self.input_block_relu.to('cuda')
         x = self.input_block_relu(x)
         
-        torch.cuda.synchronize()
-        t5 = time.perf_counter()
+        # torch.cuda.synchronize()
+        # t5 = time.perf_counter()
         # print('time elapsed input_block_relu: ', abs(t5-t4))
         
         
         
-        torch.cuda.synchronize()
-        t6 = time.perf_counter()
+        # torch.cuda.synchronize()
+        # t6 = time.perf_counter()
         # print('time elapsed input_block_bn: ', abs(t5-t6))
 
         x = self.local_pool(x,2)      
@@ -391,42 +399,42 @@ class VN_ResNet1D(nn.Module):
         # x = self.input_block_pool(x)
 
         # x = self.residual_groups(x)
-        self.residual_groups1.to('cuda')
-        self.residual_groups2.to('cuda')
-        self.residual_groups3.to('cuda')
-        self.residual_groups4.to('cuda')
+        # self.residual_groups1.to('cuda')
+        # self.residual_groups2.to('cuda')
+        # self.residual_groups3.to('cuda')
+        # self.residual_groups4.to('cuda')
         
-        torch.cuda.synchronize()
-        t7 = time.perf_counter()
+        # torch.cuda.synchronize()
+        # t7 = time.perf_counter()
         
         x = self.residual_groups1(x)
         
-        torch.cuda.synchronize()
-        t8 = time.perf_counter()
+        # torch.cuda.synchronize()
+        # t8 = time.perf_counter()
         # print('time elapsed residual_groups1: ', abs(t8-t7))
 
         
         # print('shape of x after residual_groups1 : ', x.shape)  #[1024, 64, 50]   -> [1024, 10, 6, 50]  -> [1024, 21, 3, 50]
         x = self.residual_groups2(x)
         
-        torch.cuda.synchronize()
-        t9 = time.perf_counter()
+        # torch.cuda.synchronize()
+        # t9 = time.perf_counter()
         # print('time elapsed residual_groups2: ', t9-t8)
 
         
         # print('shape of x after residual_groups2 : ', x.shape)  #[1024, 128, 25]  -> [1024, 21, 6, 25]
         x = self.residual_groups3(x)
         
-        torch.cuda.synchronize()
-        t10 = time.perf_counter()
+        # torch.cuda.synchronize()
+        # t10 = time.perf_counter()
         # print('time elapsed residual_groups3: ', t10-t9)
         
         
         # print('shape of x after residual_groups3 : ', x.shape)  #[1024, 256, 13]  -> [1024, 42, 6, 13]
         x = self.residual_groups4(x)
         
-        torch.cuda.synchronize()
-        t11 = time.perf_counter()
+        # torch.cuda.synchronize()
+        # t11 = time.perf_counter()
         # print('time elapsed residual_groups4: ', t11-t10)
         
         
@@ -435,11 +443,11 @@ class VN_ResNet1D(nn.Module):
                  
         mean = self.output_block1(x)  # mean
         logstd = self.output_block2(x)  # covariance sigma = exp(2 * logstd)
-        params_outblock = sum(p.numel() for p in self.output_block1.parameters()) + sum(p.numel() for p in self.output_block2.parameters())
+        # params_outblock = sum(p.numel() for p in self.output_block1.parameters()) + sum(p.numel() for p in self.output_block2.parameters())
         # print('shape of x after output_block : ', mean.shape, logstd.shape, 'num of params in outblock : ', params_outblock)  #[1024, 512, 7]
         
-        torch.cuda.synchronize()
-        t12 = time.perf_counter()
+        # torch.cuda.synchronize()
+        # t12 = time.perf_counter()
         # print('time elapsed output_block 1 & 2: ', t12-t11)
         # print()
         

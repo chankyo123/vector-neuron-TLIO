@@ -20,6 +20,8 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from utils.logging import logging
 from utils.utils import to_device
+import timeit
+from models.utils.vn_dgcnn_util import get_graph_feature_cross
 
 def torch_to_numpy(torch_arr):
     return torch_arr.cpu().detach().numpy()
@@ -82,6 +84,31 @@ def do_train(network, train_loader, device, epoch, optimizer, transforms=[]):
             sample = transform(sample)
         feat = sample["feats"]["imu0"]
         optimizer.zero_grad()
+        
+    # ### time check start
+    #     x = feat
+    #     x = x.unsqueeze(1)
+    #     x = get_graph_feature_cross(x, k=20)
+    #     x = torch.transpose(x,1,-1)
+    #     layer_functions = [layer for layer in network.children()]
+    #     print(network)
+    #     def time_layer(layer_fn):
+    #         def wrapper():
+    #             with torch.no_grad():
+    #                 print(layer_fn)
+    #                 output = layer_fn(x)
+    #         return wrapper
+        
+    #     layer_times = []
+        
+    #     for layer_function in layer_functions:
+    #         execution_time = timeit.timeit(time_layer(layer_function), number=1)
+    #         layer_times.append((layer_function.__class__.__name__, execution_time))
+            
+    #     for layer_name, execution_time in layer_times:
+    #         print(f"Layer: {layer_name}, Time: {execution_time:.4f} seconds")
+    #     ### time check code end
+    
         pred, pred_cov = network(feat)
 
         if len(pred.shape) == 2:
@@ -98,9 +125,16 @@ def do_train(network, train_loader, device, epoch, optimizer, transforms=[]):
         train_losses.append(torch_to_numpy(loss))
             
         #print("Loss full: ", loss)
-
+        torch.cuda.synchronize()
+        t1 = time.perf_counter()
+        start_t = time.time()
         loss = loss.mean()
         loss.backward()
+        
+        torch.cuda.synchronize()
+        t2 = time.perf_counter()
+        end_t = time.time()
+        print("backward time using timeit : ", t2-t1, bid)
 
         #print("Loss mean: ", loss.item())
         

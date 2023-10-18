@@ -522,6 +522,7 @@ def net_test(args):
     network = get_model(args.arch, net_config, args.input_dim, args.output_dim).to(
         device
     )
+    print(network)
     network.load_state_dict(checkpoint["model_state_dict"])
     network.eval()
     logging.info(f"Model {args.model_path} loaded to device {device}.")

@@ -1,5 +1,6 @@
 from network.model_resnet import BasicBlock1D, ResNet1D
-from network.model_vn_resnet import VN_BasicBlock1D, VN_ResNet1D
+from network.model_vn_resnet_2 import VN_BasicBlock1D, VN_ResNet1D
+from network.model_vn_resnet_original import VN_BasicBlock1D_original, VN_ResNet1D_original
 from network.model_resnet_seq import ResNetSeq1D
 from network.model_tcn import TlioTcn
 
@@ -14,6 +15,9 @@ def get_model(arch, net_config, input_dim=6, output_dim=3):
         network = VN_ResNet1D(
             VN_BasicBlock1D, input_dim, output_dim, [2, 2, 2, 2], net_config["in_dim"]
         )
+        # network = VN_ResNet1D_original(
+        #     VN_BasicBlock1D_original, input_dim, output_dim, [2, 2, 2, 2], net_config["in_dim"]
+        # )
     elif arch == "resnet_seq":
         network = ResNetSeq1D(
             BasicBlock1D, input_dim, output_dim, [2, 2, 2, 2], net_config["in_dim"]

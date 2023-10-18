@@ -34,18 +34,19 @@ def vn_conv1x1(in_planes, out_planes, stride=1):
         conv1x1 = nn.Sequential(
             nn.Linear(in_planes, out_planes, bias=False),
             VNMeanPool(stride),
+            # nn.Conv1d(in_planes, out_planes, kernel_size=1, stride=stride, bias=False)
         )
     # return nn.Conv1d(in_planes, out_planes, kernel_size=1, stride=stride, bias=False)
     return conv1x1
 
 
-class VN_BasicBlock1D(nn.Module):
+class VN_BasicBlock1D_original(nn.Module):
     """ Supports: groups=1, dilation=1 """
 
     expansion = 1
 
     def __init__(self, in_planes, planes, stride=1, downsample=None):
-        super(VN_BasicBlock1D, self).__init__()
+        super(VN_BasicBlock1D_original, self).__init__()
         # Both self.conv1 and self.downsample layers downsample the input when stride != 1
         
         # self.conv1 = conv3x1(in_planes, planes, stride)
@@ -208,7 +209,7 @@ class FcBlock(nn.Module):
         return x
 
 
-class VN_ResNet1D(nn.Module):
+class VN_ResNet1D_original(nn.Module):
     """
     ResNet 1D
     in_dim: input channel (for IMU data, in_dim=6)
@@ -225,8 +226,8 @@ class VN_ResNet1D(nn.Module):
         inter_dim,
         zero_init_residual=False,
     ):
-        super(VN_ResNet1D, self).__init__()
-        div = 3 #3 if vector, 1 if scalar
+        super(VN_ResNet1D_original, self).__init__()
+        div = 6 #3 if vector, 1 if scalar
         self.base_plane = 64 //div
         self.inplanes = self.base_plane
         self.n_knn = 20
@@ -252,7 +253,7 @@ class VN_ResNet1D(nn.Module):
 
         # self.input_block_conv  = nn.Conv1d(in_dim, 64//div, kernel_size=7, stride=2, padding=3, bias=False)
         self.input_block_conv  = nn.Linear(in_dim, self.base_plane, bias=False)
-        self.input_block_local_info  = nn.Conv1d(in_dim, in_dim, kernel_size=7, stride=2, padding=3, bias=False)
+        # self.input_block_local_info  = nn.Conv1d(in_dim, in_dim, kernel_size=7, stride=2, padding=3, bias=False)
         # print('num of param of conv-input-block : ' , sum(p.numel() for p in self.input_block_conv.parameters()) )
         # print('num of param of linear-input-block : ' , sum(p.numel() for p in (nn.Linear(in_dim, self.base_plane, bias=False)).parameters() ) )
         
@@ -274,10 +275,10 @@ class VN_ResNet1D(nn.Module):
         #     self._make_residual_group1d(block_type, 512//6, group_sizes[3], stride=2),
         # )
 
-        self.residual_groups1 = self._make_residual_group1d(block_type, 64//3, group_sizes[0], stride=1)
-        self.residual_groups2 = self._make_residual_group1d(block_type, 128//3, group_sizes[1], stride=2)
-        self.residual_groups3 = self._make_residual_group1d(block_type, 256//3, group_sizes[2], stride=2)
-        self.residual_groups4 = self._make_residual_group1d(block_type, 512//3, group_sizes[3], stride=2)
+        self.residual_groups1 = self._make_residual_group1d(block_type, 64//div, group_sizes[0], stride=1)
+        self.residual_groups2 = self._make_residual_group1d(block_type, 128//div, group_sizes[1], stride=2)
+        self.residual_groups3 = self._make_residual_group1d(block_type, 256//div, group_sizes[2], stride=2)
+        self.residual_groups4 = self._make_residual_group1d(block_type, 512//div, group_sizes[3], stride=2)
         
         
         # Output module
@@ -361,6 +362,7 @@ class VN_ResNet1D(nn.Module):
         
         self.input_block_bn.to('cuda')
         x = self.input_block_bn(x)
+        
         
         self.input_block_relu.to('cuda')
         x = self.input_block_relu(x)

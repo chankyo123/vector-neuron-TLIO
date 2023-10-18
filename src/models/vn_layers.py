@@ -35,11 +35,13 @@ class VNLeakyReLU(nn.Module):
         '''
         x: point features of shape [B, N_feat, 3, N_samples, ...]
         '''
+        # print('shape of x in the input of vnleakyrelu : ', x.shape)
         d = self.map_to_dir(x.transpose(1,-1)).transpose(1,-1)
         dotprod = (x*d).sum(2, keepdim=True)
         mask = (dotprod >= 0).float()
         d_norm_sq = (d*d).sum(2, keepdim=True)
         x_out = self.negative_slope * x + (1-self.negative_slope) * (mask*x + (1-mask)*(x-(dotprod/(d_norm_sq+EPS))*d))
+        # print('shape of x at the output of vnleakyrelu : ', x_out.shape)
         return x_out
 
 
@@ -114,8 +116,10 @@ class VNBatchNorm(nn.Module):
         super(VNBatchNorm, self).__init__()
         self.dim = dim
         if dim == 3 or dim == 4:
+            # self.bn = nn.BatchNorm1d(num_features).to('cuda')
             self.bn = nn.BatchNorm1d(num_features)
         elif dim == 5:
+            # self.bn = nn.BatchNorm2d(num_features).to('cuda')
             self.bn = nn.BatchNorm2d(num_features)
     
     def forward(self, x):
@@ -149,12 +153,72 @@ class VNMaxPool(nn.Module):
         x_max = x[index_tuple]
         print("output shape of vnmaxpool : ", x_max.shape)
         return x_max
+    
+class VNMeanPool(nn.Module):
+    def __init__(self, kernel=2):
+        super(VNMeanPool, self).__init__()
+        self.kernel = kernel    
+    def forward(self, x):
+        B,C,N,W = x.shape
+        if isinstance(W, torch.Tensor):
+            W = W.item()
+        reduced_W = (W + 1)//2 if self.kernel == 2 and W % 2 == 1 else W //self.kernel
+        output = torch.zeros(B,C,N,reduced_W).to('cuda')
+
+        for i in range(reduced_W):
+            local_region = x[:, :, :, i * self.kernel : (i+1) * self.kernel]
+            local_average = local_region.mean(dim=3, keepdim=False)
+            output[:,:,:,i] = local_average
+        # print('input shape of vnmeanpool : ', x.shape)
+        # print('output shape of vnmeanpool : ', output.shape)
+        return output
+            
+    
 
 
 def mean_pool(x, dim=-1, keepdim=False):
     # print("input shape of mean_pool : ", x.shape)
     # print("output shape of mean_pool : ", (x.mean(dim=dim, keepdim=keepdim)).shape)
     return x.mean(dim=dim, keepdim=keepdim)
+
+
+def local_mean_pool(x, kernel=2):
+    if len(x.shape) == 4:
+        B,C,N,W = x.shape
+        if isinstance(W, torch.Tensor):
+            W = W.item()
+            
+        if kernel == 2 and W % 2 == 1:
+            reduced_W = (W + 1)//2
+        else:
+            reduced_W = W // kernel
+            
+        output = torch.zeros(B,C,N,reduced_W).to('cuda')
+        
+        for i in range(reduced_W):
+            local_region = x[:,:,:,i*kernel:(i+1)*kernel]
+            local_average = local_region.mean(dim=3, keepdim=False)
+            output[:,:,:,i] = local_average
+        
+        return output.to('cuda')
+    else:
+        B,N,W = x.shape
+        if isinstance(W, torch.Tensor):
+            W = W.item()
+            
+        if kernel == 2 and W % 2 == 1:
+            reduced_W = (W + 1)//2
+        else:
+            reduced_W = W // kernel
+            
+        output = torch.zeros(B,N,reduced_W).to('cuda')
+        
+        for i in range(reduced_W):
+            local_region = x[:,:,i*kernel:(i+1)*kernel]
+            local_average = local_region.mean(dim=2, keepdim=False)
+            output[:,:,i] = local_average
+        
+        return output.to('cuda')
 
 
 class VNStdFeature(nn.Module):
