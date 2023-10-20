@@ -108,7 +108,8 @@ def do_train(network, train_loader, device, epoch, optimizer, transforms=[]):
     #     for layer_name, execution_time in layer_times:
     #         print(f"Layer: {layer_name}, Time: {execution_time:.4f} seconds")
     #     ### time check code end
-        print('bid = ', bid)
+        if bid %2 == 1:
+            print('bid = ', bid)
         pred, pred_cov = network(feat)
 
         if len(pred.shape) == 2:
