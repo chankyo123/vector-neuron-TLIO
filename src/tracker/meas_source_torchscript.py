@@ -18,7 +18,7 @@ class MeasSourceTorchScript:
             self.device = torch.device("cpu")
             self.net = torch.jit.load(model_path, map_location="cpu")
         else:
-            self.device = torch.device("cuda:0")
+            self.device = torch.device("cuda")
             # NOTE TLIO baseline model won't work on GPU unless we ass map_location
             # https://github.com/pytorch/pytorch/issues/78207
             self.net = torch.jit.load(model_path, map_location=self.device)

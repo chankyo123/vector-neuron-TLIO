@@ -108,7 +108,7 @@ def do_train(network, train_loader, device, epoch, optimizer, transforms=[]):
     #     for layer_name, execution_time in layer_times:
     #         print(f"Layer: {layer_name}, Time: {execution_time:.4f} seconds")
     #     ### time check code end
-    
+        print('bid = ', bid)
         pred, pred_cov = network(feat)
 
         if len(pred.shape) == 2:
@@ -134,7 +134,7 @@ def do_train(network, train_loader, device, epoch, optimizer, transforms=[]):
         torch.cuda.synchronize()
         t2 = time.perf_counter()
         end_t = time.time()
-        print("backward time using timeit : ", t2-t1, bid)
+        # print("backward time using timeit : ", t2-t1, bid)
 
         #print("Loss mean: ", loss.item())
         
@@ -357,7 +357,7 @@ def net_train(args):
         logging.info(f"Number of val samples: {len(data.val_dataset)}")
 
     device = torch.device(
-        "cuda:0" if torch.cuda.is_available() and not args.cpu else "cpu"
+        "cuda" if torch.cuda.is_available() and not args.cpu else "cpu"
     )
     network = get_model(args.arch, net_config, args.input_dim, args.output_dim)
     network.to(device)

@@ -68,7 +68,6 @@ def get_graph_feature_cross(x, k=20, idx=None):
     device = torch.device('cuda')
 
     idx_base = torch.arange(0, batch_size, device=device).view(-1, 1, 1)*num_points
-    # idx = idx.to('cuda')
     idx = idx + idx_base
 
     idx = idx.view(-1)

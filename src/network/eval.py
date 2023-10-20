@@ -36,7 +36,7 @@ def net_eval(args):
         return
 
     device = torch.device(
-        "cuda:0" if torch.cuda.is_available() and not args.cpu else "cpu"
+        "cuda" if torch.cuda.is_available() and not args.cpu else "cpu"
     )
     checkpoint = torch.load(args.model_path, map_location=device)
     network = get_model(args.arch, net_config, args.input_dim, args.output_dim).to(

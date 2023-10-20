@@ -78,6 +78,10 @@ if __name__ == "__main__":
     # Main
     ###########################################################
     if args.mode == "train":
+        print()
+        print('past window size : ', args.past_time, 'total window size : ', args.window_time)
+        print()
+        
         network.net_train(args)
     elif args.mode == "test":
         network.net_test(args)

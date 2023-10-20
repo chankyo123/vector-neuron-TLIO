@@ -90,6 +90,7 @@ class VN_BasicBlock1D(nn.Module):
             
         else:
             assert False
+        
         out = self.bn1(out)
         out = self.relu(out)
 
@@ -339,6 +340,8 @@ class VN_ResNet1D(nn.Module):
 
     def forward(self, x):
         local_info = True
+        # print('input x shape of imu : ', x.shape)
+        # print()
         # x = self.input_block(x)
         # torch.cuda.synchronize()
         # t1 = time.perf_counter()
@@ -440,6 +443,7 @@ class VN_ResNet1D(nn.Module):
         
         # print('shape of x after residual_groups4 : ', x.shape)  #[1024, 512, 7]  -> [1024, 85, 6, 7]
         x = x.reshape(x.shape[0], -1, x.shape[-1])   #[1024, 510, 7]
+        # print('shape of x after residual_groups4 : ', x.shape)  #[1024, 512, 7]  -> [1024, 85, 6, 7]
                  
         mean = self.output_block1(x)  # mean
         logstd = self.output_block2(x)  # covariance sigma = exp(2 * logstd)

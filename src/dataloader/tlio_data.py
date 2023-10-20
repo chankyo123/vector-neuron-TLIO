@@ -38,7 +38,8 @@ class TlioData:
         decimator=10,
         dataset_style="mmap", # "mmap", "ram", or "iter". "iter" is best for huge datasets but sacrifice true randomness, mmap can go a bit farther than "ram" which just stores all in memory
         data_window_config={
-            "window_size": 200, # 200 window size @200 Hz for 1sec of input data
+            # "window_size": 200, # 200 window size @200 Hz for 1sec of input data (if past, total exists, need to sum both)
+            "window_size": 300, # 200 window size @200 Hz for 1sec of input data (if past, total exists, need to sum both)
             "step_period_us": 5000, # NOTE: unused at this point
             "data_in_t0_yaw_normalized_frame": False,
             "input_sensors": ["imu0"],
@@ -91,7 +92,7 @@ class TlioData:
                 f"{split}_dataloader : data_window_config is partially ignored here for now! "
                 "(past and future data should be 0 for now)"
             )
-            starting_point_time_us = 0  # TODO(dcaruso) positive if past imu data here
+            starting_point_time_us = 1000000  # TODO(dcaruso) positive if past imu data here
             prediction_times_us = 0  # TODO(dcaruso) negative if future imu data here
             genparams = DatasetGenerationParams(
                 window_size=self.data_window_config["window_size"],
