@@ -164,11 +164,13 @@ def plot_cdf_ax(data, var, ax, fontsize=10, fontname="Adobe Arabic"):
     linestyle_algo = {"filter": "-", "ronin": ":"}
     percentile = np.arange(0, 100.0 / 100, 0.1 / 100.0)
     color_rn = {}
+    cnt = 0
     for i, nr in enumerate(data["name_run"].unique()):
         color_rn[nr] = "C" + str(i)
     for nr in data["name_run"].unique():
         drun = data[data.name_run == nr]
         for algo in drun["algo"].unique():
+            # print(drun[drun.algo == algo],var)
             d = drun[drun.algo == algo][var].quantile(percentile)
             ax.plot(
                 d,
@@ -177,6 +179,7 @@ def plot_cdf_ax(data, var, ax, fontsize=10, fontname="Adobe Arabic"):
                 color=color_rn[nr],
                 label=f"{nr}-{algo}",
             )
+            cnt = cnt +1
     ax.set_xlim(left=0)
     ax.set_ylim([0, 1])
     ax.set_xlabel(var, fontsize=fontsize, fontname=fontname)
@@ -349,8 +352,8 @@ def plot_sysperf_cdf(
     )
     fig, axs = plt.subplots(nrows=2, ncols=3, figsize=(16, 9), dpi=90)
     funcs = ["ATE (m)", "RPE-1s (m)", "Drift (%)"]
-    for i, func in enumerate(funcs):
-        plot_cdf_ax(d, func, axs[0, i], fontsize=fontsize, fontname=fontname)
+    # for i, func in enumerate(funcs):
+    #     plot_cdf_ax(d, func, axs[0, i], fontsize=fontsize, fontname=fontname)
     funcs = ["AYE (deg)", "RYE-1s (deg)", "Yaw-Drift (deg/hour)"]
     for i, func in enumerate(funcs):
         plot_cdf_ax(d, func, axs[1, i], fontsize=fontsize, fontname=fontname)
@@ -369,6 +372,7 @@ def plot_sysperf_cdf(
     )
     plt.setp(leg.texts, family=fontname)
     plt.subplots_adjust(hspace=0.4)
+    plt.savefig('plot_sysperf_cdf.png')
     plt.show()
 
 

@@ -442,6 +442,7 @@ class VN_ResNet1D(nn.Module):
         
         
         # print('shape of x after residual_groups4 : ', x.shape)  #[1024, 512, 7]  -> [1024, 85, 6, 7]
+        
         x = x.reshape(x.shape[0], -1, x.shape[-1])   #[1024, 510, 7]
         # print('shape of x after residual_groups4 : ', x.shape)  #[1024, 512, 7]  -> [1024, 85, 6, 7]
                  

@@ -88,8 +88,9 @@ def pose_integrate(args, dataset, preds):
 
     #ts_in_range = ts[ind_intg[0] : ind_intg[-1]]  # s
     pos_pred = pos_intg #interp1d(ts_intg, pos_intg, axis=0)(ts_in_range)
-    #ori_pred = dataset.orientations[0][ind_intg[0] : ind_intg[-1], :]
-    eul_pred = eul_gt #Rotation.from_quat(ori_pred).as_euler("xyz", degrees=True)
+    # ori_pred = dataset.orientations[0][ind_intg[0] : ind_intg[-1], :]
+    eul_pred = r_gt.as_euler("xyz", degrees=True)
+    # eul_pred = eul_gt #Rotation.from_quat(ori_pred).as_euler("xyz", degrees=True)
     
     #print("SHAPES", ts.shape, pos_pred.shape, pos_gt.shape, eul_pred.shape, eul_gt.shape)
 
@@ -123,6 +124,7 @@ def compute_metrics_and_plotting(args, net_attr_dict, traj_attr_dict):
     ate = np.mean(np.linalg.norm(diff_pos, axis=1))
     # get RMHE (yaw)
     diff_eul = wrap_rpy(eul_pred - eul_gt)
+    print('diff_eul : ', diff_eul)
     rmhe = np.sqrt(np.mean(diff_eul[:, 2] ** 2))
     # get position drift
     traj_lens = np.sum(np.linalg.norm(pos_gt[1:] - pos_gt[:-1], axis=1))
@@ -185,7 +187,6 @@ def compute_metrics_and_plotting(args, net_attr_dict, traj_attr_dict):
         "rpe_rmse": rpe_rmse,
         "rpes": rpes,
     }
-
     return metrics, plot_dict
 
 
@@ -450,7 +451,9 @@ def arg_conversion(args):
 
     data_window_config = dotdict()
     data_window_config.past_data_size = int(args.past_time * args.imu_freq)
+    
     data_window_config.window_size = int(args.window_time * args.imu_freq)
+    print(data_window_config.window_size)
     data_window_config.future_data_size = int(args.future_time * args.imu_freq)
     data_window_config.step_size = int(args.imu_freq / args.sample_freq)
     data_window_config.data_style = "resampled"
@@ -467,7 +470,11 @@ def arg_conversion(args):
         // 32
         + 1
     }
-
+    if data_window_config.past_data_size != 0:
+        data_window_config.window_size = int((args.window_time + args.past_time) * args.imu_freq)
+    else:
+        data_window_config.window_size = int(args.window_time * args.imu_freq)
+    
     # Display
     np.set_printoptions(formatter={"all": "{:.6f}".format})
     logging.info(f"Training/testing with {args.imu_freq} Hz IMU data")
@@ -522,7 +529,7 @@ def net_test(args):
     network = get_model(args.arch, net_config, args.input_dim, args.output_dim).to(
         device
     )
-    print(network)
+    
     network.load_state_dict(checkpoint["model_state_dict"])
     network.eval()
     logging.info(f"Model {args.model_path} loaded to device {device}.")
