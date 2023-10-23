@@ -80,6 +80,7 @@ if __name__ == "__main__":
     if args.mode == "train":
         print()
         print('past window size : ', args.past_time, 'total window size : ', args.window_time)
+        print('gyro_bias_range : ', args.gyro_bias_range, 'accel_bias_range : ', args.accel_bias_range)
         print()
         
         network.net_train(args)
