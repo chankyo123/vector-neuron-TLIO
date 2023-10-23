@@ -92,7 +92,8 @@ class TlioData:
                 f"{split}_dataloader : data_window_config is partially ignored here for now! "
                 "(past and future data should be 0 for now)"
             )
-            starting_point_time_us = 1000000  # TODO(dcaruso) positive if past imu data here
+            # starting_point_time_us = 1000000  # TODO(dcaruso) positive if past imu data here
+            starting_point_time_us = 0  # TODO(dcaruso) positive if past imu data here
             prediction_times_us = 0  # TODO(dcaruso) negative if future imu data here
             genparams = DatasetGenerationParams(
                 window_size=self.data_window_config["window_size"],
