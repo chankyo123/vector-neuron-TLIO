@@ -124,7 +124,7 @@ def compute_metrics_and_plotting(args, net_attr_dict, traj_attr_dict):
     ate = np.mean(np.linalg.norm(diff_pos, axis=1))
     # get RMHE (yaw)
     diff_eul = wrap_rpy(eul_pred - eul_gt)
-    print('diff_eul : ', diff_eul)
+    # print('diff_eul : ', diff_eul)
     rmhe = np.sqrt(np.mean(diff_eul[:, 2] ** 2))
     # get position drift
     traj_lens = np.sum(np.linalg.norm(pos_gt[1:] - pos_gt[:-1], axis=1))
