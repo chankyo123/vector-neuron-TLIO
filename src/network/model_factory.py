@@ -1,6 +1,13 @@
 from network.model_resnet import BasicBlock1D, ResNet1D
-from network.model_vn_resnet_2 import VN_BasicBlock1D, VN_ResNet1D
-from network.model_vn_resnet_original import VN_BasicBlock1D_original, VN_ResNet1D_original
+
+# from network.model_vn_resnet_2 import VN_BasicBlock1D, VN_ResNet1D
+# from network.model_vn_resnet_3reslay import VN_BasicBlock1D, VN_ResNet1D
+from network.model_vn_resnet_23reslay import VN_BasicBlock1D, VN_ResNet1D
+# from network.model_vn_resnet_fc1lay import VN_BasicBlock1D, VN_ResNet1D
+# from network.model_vn_resnet_fc2lay import VN_BasicBlock1D, VN_ResNet1D
+
+# from network.model_vn_resnet_original import VN_BasicBlock1D_original, VN_ResNet1D_original
+
 from network.model_resnet_seq import ResNetSeq1D
 from network.model_tcn import TlioTcn
 
