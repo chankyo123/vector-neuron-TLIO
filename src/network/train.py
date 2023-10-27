@@ -432,6 +432,9 @@ def net_train(args):
                 save_model(args, epoch, network, optimizer, best=True)
         else:
             save_model(args, epoch, network, optimizer, best=False)
+            
+        if epoch == 150 or epoch == 200 or epoch == 300:
+            save_model(args, epoch, network, optimizer, best=False, interrupt=False)
 
     logging.info("Training complete.")
 
