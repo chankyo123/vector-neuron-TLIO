@@ -108,8 +108,8 @@ def do_train(network, train_loader, device, epoch, optimizer, transforms=[]):
     #     for layer_name, execution_time in layer_times:
     #         print(f"Layer: {layer_name}, Time: {execution_time:.4f} seconds")
     #     ### time check code end
-        # if bid <10:
-        print('bid = ', bid)
+        if bid <10:
+            print('bid = ', bid)
         pred, pred_cov = network(feat)
 
         if len(pred.shape) == 2:
@@ -433,7 +433,7 @@ def net_train(args):
         else:
             save_model(args, epoch, network, optimizer, best=False)
             
-        if epoch == 100 or epoch == 150 or epoch == 200 or epoch == 250 or epoch == 300:
+        if epoch == 100 or epoch == 117 or epoch == 125 or epoch == 150 or epoch == 200 or epoch == 250 or epoch == 300:
             save_model(args, epoch, network, optimizer, best=False, interrupt=False)
 
     logging.info("Training complete.")
