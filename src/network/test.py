@@ -20,6 +20,7 @@ from utils.dotdict import dotdict
 from utils.utils import to_device
 from utils.logging import logging
 from utils.math_utils import *
+import time
 
 
 def compute_rpe(rpe_ns, ps, ps_gt, yaw, yaw_gt):
@@ -411,7 +412,7 @@ def get_inference(network, data_loader, device, epoch):
         preds_all.append(torch_to_numpy(pred))
         preds_cov_all.append(torch_to_numpy(pred_cov))
         losses_all.append(torch_to_numpy(loss))
-
+    
     targets_all = np.concatenate(targets_all, axis=0)
     preds_all = np.concatenate(preds_all, axis=0)
     preds_cov_all = np.concatenate(preds_cov_all, axis=0)
@@ -536,6 +537,8 @@ def net_test(args):
 
     # initialize containers
     all_metrics = {}
+    consumed_times = []
+    consumed_gpu = []
 
     for data in test_list:
         logging.info(f"Processing {data}...")
@@ -558,7 +561,21 @@ def net_test(args):
             continue
 
         # Obtain trajectory
+        start_t = time.time()
         net_attr_dict = get_inference(network, seq_loader, device, epoch=50)
+        end_t = time.time()
+        mem_used_max_GB = torch.cuda.max_memory_allocated() / (1024*1024*1024)
+        torch.cuda.reset_peak_memory_stats()
+        mem_str = f'GPU Mem: {mem_used_max_GB:.3f}GB'
+        logging.info(mem_str)
+        consumed_gpu.append(mem_used_max_GB)    
+        
+        logging.info(f"inference time usage: {end_t - start_t:.3f}s")
+        consumed_times.append(end_t - start_t)    
+        time_mem_log = osp.join(args.out_dir, 'infernece_time_mem_log.txt')
+        with open(time_mem_log, 'w') as log_file:
+            log_file.write(f"Inference time : {end_t - start_t:.4f} seconds, {mem_used_max_GB:.3f}GB\n")
+        
         traj_attr_dict = pose_integrate(args, seq_dataset, net_attr_dict["preds"])
         outdir = osp.join(args.out_dir, data)
         if osp.exists(outdir) is False:
@@ -607,4 +624,13 @@ def net_test(args):
         except Exception as e:
             raise e
 
+    mean_epoch_time = np.mean(consumed_times)
+    mean_epoch_gpu = np.mean(consumed_gpu)
+    
+    with open(time_mem_log, 'a') as log_file:
+        log_file.write(f"Mean Inference time: {mean_epoch_time:.4f} seconds, {mean_epoch_gpu:.3f}GB\n")
+    logging.info(f"Mean inference time usage: {mean_epoch_time:.3f}s")
+    mem_str = f'Inference GPU Mem: {mean_epoch_gpu:.3f}GB'
+    logging.info(mem_str)
+    
     return

@@ -22,6 +22,7 @@ from utils.logging import logging
 from utils.utils import to_device
 import timeit
 from models.utils.vn_dgcnn_util import get_graph_feature_cross
+from scipy.spatial.transform import Rotation
 
 def torch_to_numpy(torch_arr):
     return torch_arr.cpu().detach().numpy()
@@ -110,7 +111,32 @@ def do_train(network, train_loader, device, epoch, optimizer, transforms=[]):
     #     ### time check code end
         if bid <10:
             print('bid = ', bid)
+            
+            
+        # >>> SO(3) Equivariance Check
+        # rotation_matrix = np.array([[0.1097, 0.1448, 0.9834],[0.8754, -0.4827, -0.0266],[0.4708, 0.8637, -0.1797]])
+        # rotation_matrix = torch.from_numpy(rotation_matrix).to('cuda').to(torch.float32)
+        # accelerometer_data = feat[:, :3,:].to(torch.float32)
+        # accelerometer_data = accelerometer_data.permute(1,0,2).reshape(3,-1)
+        # gyroscope_data = feat[:, 3:, :].to(torch.float32)
+        # gyroscope_data = gyroscope_data.permute(1,0,2).reshape(3,-1)
+
+        # rotated_accelerometer_data = torch.matmul(rotation_matrix, accelerometer_data)
+        # rotated_accelerometer_data = rotated_accelerometer_data.reshape(rotated_accelerometer_data.size(0), feat.size(0), feat.size(2))
+        # rotated_accelerometer_data = rotated_accelerometer_data.permute(1,0,2)
+        # rotated_gyroscope_data = torch.matmul(rotation_matrix, gyroscope_data)
+        # rotated_gyroscope_data = rotated_gyroscope_data.reshape(rotated_gyroscope_data.size(0), feat.size(0), feat.size(2))
+        # rotated_gyroscope_data = rotated_gyroscope_data.permute(1,0,2)
+        
+        # feat_rot = torch.cat((rotated_accelerometer_data, rotated_gyroscope_data), dim=1)
+        # pred_rot, pred_cov_rot = network(feat_rot)
+        # <<< SO(3) Equivariance Check
+        
         pred, pred_cov = network(feat)
+        
+        # print(torch.matmul(pred,rotation_matrix)[:3,:3])
+        # print(pred_rot[:3,:3])
+        # print()
 
         if len(pred.shape) == 2:
             targ = sample["targ_dt_World"][:,-1,:]
@@ -408,6 +434,9 @@ def net_train(args):
         sys.exit()
 
     best_val_loss = np.inf
+    consumed_times = []
+    consumed_gpu = []
+    
     for epoch in range(start_epoch + 1, args.epochs):
         signal.signal(
             signal.SIGINT, partial(stop_signal_handler, args, epoch, network, optimizer)
@@ -420,10 +449,21 @@ def net_train(args):
         logging.info(f"-------------- Training, Epoch {epoch} ---------------")
         start_t = time.time()
         train_attr_dict = do_train(network, train_loader, device, epoch, optimizer, train_transforms)
+        mem_used_max_GB = torch.cuda.max_memory_allocated() / (1024*1024*1024)
+        torch.cuda.reset_peak_memory_stats()
+        mem_str = f'GPU Mem: {mem_used_max_GB:.3f}GB'
+        logging.info(mem_str)
+        consumed_gpu.append(mem_used_max_GB)    
+        
         write_summary(summary_writer, train_attr_dict, epoch, optimizer, "train")
         end_t = time.time()
         logging.info(f"time usage: {end_t - start_t:.3f}s")
-
+        
+        time_mem_log = osp.join(args.out_dir, 'time_mem_log.txt')
+        with open(time_mem_log, 'w') as log_file:
+            log_file.write(f"Epoch {epoch}: {end_t - start_t:.4f} seconds, {mem_used_max_GB:.3f}GB\n")
+        consumed_times.append(end_t - start_t)    
+            
         if val_loader is not None:
             val_attr_dict = get_inference(network, val_loader, device, epoch)
             write_summary(summary_writer, val_attr_dict, epoch, optimizer, "val")
@@ -435,7 +475,15 @@ def net_train(args):
             
         if epoch == 100 or epoch == 117 or epoch == 125 or epoch == 150 or epoch == 200 or epoch == 250 or epoch == 300:
             save_model(args, epoch, network, optimizer, best=False, interrupt=False)
-
+    
+    mean_epoch_time = np.mean(consumed_times)
+    mean_epoch_gpu = np.mean(consumed_gpu)
+    with open(time_mem_log, 'a') as log_file:
+        log_file.write(f"Mean Epoch Time: {mean_epoch_time:.4f} seconds, {mean_epoch_gpu:.3f}GB\n")
+    logging.info(f"time usage: {mean_epoch_time:.3f}s")
+    mem_str = f'GPU Mem: {mean_epoch_gpu:.3f}GB'
+    logging.info(mem_str)
+        
     logging.info("Training complete.")
 
     return

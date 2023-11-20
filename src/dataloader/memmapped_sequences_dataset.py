@@ -298,4 +298,5 @@ class MemMappedSequencesDataset(Dataset, SequencesDataset):
             assert abs(new_len - len(traj)) < 2, \
                     f"Expected off-by-one at most, but got {abs(new_len - len(traj))}"
             traj = traj[:new_len]
+        print(traj[:,4:], traj.shape)
         return Rotation.from_quat(traj[:,:4]), traj[:,4:]

@@ -292,8 +292,8 @@ class VN_ResNet1D(nn.Module):
         # )
 
         self.residual_groups1 = self._make_residual_group1d(block_type, 64//3, group_sizes[0], stride=1)
-        # self.residual_groups2 = self._make_residual_group1d(block_type, 128//3, group_sizes[1], stride=2)
-        # self.residual_groups3 = self._make_residual_group1d(block_type, 256//3, group_sizes[2], stride=2)
+        self.residual_groups2 = self._make_residual_group1d(block_type, 128//3, group_sizes[1], stride=2)
+        self.residual_groups3 = self._make_residual_group1d(block_type, 256//3, group_sizes[2], stride=2)
         self.residual_groups4 = self._make_residual_group1d(block_type, 512//3, group_sizes[3], stride=2)
         
         
@@ -401,7 +401,7 @@ class VN_ResNet1D(nn.Module):
 
         
         # print('shape of x after residual_groups1 : ', x.shape)  #[1024, 64, 50]   -> [1024, 10, 6, 50]  -> [1024, 21, 3, 50]
-        # x = self.residual_groups2(x)
+        x = self.residual_groups2(x)
         
         # torch.cuda.synchronize()
         # t9 = time.perf_counter()
@@ -409,8 +409,8 @@ class VN_ResNet1D(nn.Module):
 
         
         # print('shape of x after residual_groups2 : ', x.shape)  #[1024, 128, 25]  -> [1024, 21, 6, 25]
-        # x = self.residual_groups3(x)
-        x = self.local_pool(x,2)      
+        x = self.residual_groups3(x)
+        # x = self.local_pool(x,2)      
         
         # torch.cuda.synchronize()
         # t10 = time.perf_counter()
@@ -419,7 +419,7 @@ class VN_ResNet1D(nn.Module):
         
         # print('shape of x after residual_groups3 : ', x.shape)  #[1024, 256, 13]  -> [1024, 42, 6, 13]
         x = self.residual_groups4(x)
-        x = self.local_pool(x,2)      
+        # x = self.local_pool(x,2)      
         # print('shape of x after residual_groups4 : ', x.shape)  #[1024, 512, 7]  -> [1024, 170, 3, 7]
         
         # >>> SO(3) Equivariance Check

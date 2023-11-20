@@ -105,3 +105,35 @@ def get_graph_feature_cross(x, k=20, idx=None):
     # feature = torch.cat((feature,feature), dim=2).contiguous()
     # print('feature shape of getcross : ', feature.shape)     # [1024, 6, 3, 200, 20]
     return feature
+
+
+def get_vector_feature(x):
+    # print(x.shape)     #torch.Size([1024, 1, 6, 200])
+    batch_size = x.size(0)
+    num_points = x.size(3)
+
+    ### make 3d imu
+    # x_acc = x[:,:,:3,:]
+    # x_ang = x[:,:,3:,:]
+    # x_resize = torch.cat((x_acc, x_ang),dim=3)
+    # x_resize[:,:,:,0::2] = x_acc
+    # x_resize[:,:,:,1::2] = x_ang
+    # x = x_resize.reshape(batch_size, 3, -1)
+    # num_points = num_points * 2
+    ### make 3d imu
+    
+    x = x.view(batch_size, -1, num_points)
+    
+    _, num_dims, _ = x.size()
+    
+    num_dims = num_dims // 6  #for 6D imu
+
+    x_acc = x[:,:3,:].transpose(2,1).contiguous() 
+    x_ang = x[:,3:,:].transpose(2,1).contiguous() 
+    
+    # feature = x.view(batch_size*num_points, -1)[idx, :]
+    x_acc = x_acc.view(batch_size, num_points, num_dims, 3)
+    x_ang = x_ang.view(batch_size, num_points, num_dims, 3)
+    
+    feature = torch.cat((x_acc, x_ang), dim=2).contiguous()   
+    return feature

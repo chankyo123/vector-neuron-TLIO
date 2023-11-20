@@ -76,6 +76,7 @@ class VN_BasicBlock1D(nn.Module):
 
     def forward(self, x):
         # x = x.unsqueeze(1) #[1024, 64, 50]
+        # print('x shape input of vnbasicblock : ', x.shape)
         identity = x
 
         if self.stride == 1:
@@ -348,6 +349,7 @@ class VN_ResNet1D(nn.Module):
 
         if local_info == True:
             x = self.input_block_local_info(x)
+        # print('x shape after local conv : ', x.shape)
 
         torch.cuda.synchronize()
         t2 = time.perf_counter()
@@ -356,13 +358,18 @@ class VN_ResNet1D(nn.Module):
         x = x.unsqueeze(1)
         x = get_graph_feature_cross(x, k=self.n_knn)
         
+        # print('x shape after get graph feature cross : ', x.shape)
+        
         # torch.cuda.synchronize()
         # t3 = time.perf_counter()
         # print('time elapsed get_graph_feature_cross: ', abs(t3-t2))
         
         x = self.input_block_conv(torch.transpose(x,1,-1))
+        # print('x shape after input_block_conv : ', x.shape)
         x = torch.transpose(x,1,-1)
+        # print('x shape after input_block_conv : ', x.shape)
         x = self.pool(x)
+        # print('x shape after pool : ', x.shape)
         if local_info != True:
             x = self.local_pool(x,2)
         
@@ -385,7 +392,7 @@ class VN_ResNet1D(nn.Module):
         # torch.cuda.synchronize()
         # t6 = time.perf_counter()
         # print('time elapsed input_block_bn: ', abs(t5-t6))
-
+        
         x = self.local_pool(x,2)      
         
         # ### when using conv-input-block

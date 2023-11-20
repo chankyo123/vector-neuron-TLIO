@@ -200,28 +200,20 @@ class FcBlock(nn.Module):
         )
         self.bn1 = nn.BatchNorm1d(self.prep_channel)
         # fc layers
-        self.fc1 = nn.Linear(self.prep_channel * self.in_dim, self.fc_dim)
-        self.fc2 = nn.Linear(self.fc_dim, self.fc_dim)
-        self.fc3 = nn.Linear(self.fc_dim, self.out_channel)
+        # self.fc1 = nn.Linear(self.prep_channel * self.in_dim, self.fc_dim)
+        # self.fc2 = nn.Linear(self.fc_dim, self.fc_dim)
+        # self.fc3 = nn.Linear(self.fc_dim, self.out_channel)
+        self.fc = nn.Linear(self.prep_channel * self.in_dim, self.out_channel)
         self.relu = nn.ReLU(True)
         self.dropout = nn.Dropout(0.5)
 
     def forward(self, x):
-        # x = self.prep1.to('cuda')(x)
         x = self.prep1(x)
-        # x = self.bn1.to('cuda')(x)
         x = self.bn1(x)
         x = x.view(x.size(0), -1)
-        # x = self.fc1.to('cuda')(x)
-        x = self.fc1(x)
+        x = self.fc(x)
         x = self.relu(x)
         x = self.dropout(x)
-        # x = self.fc2.to('cuda')(x)
-        x = self.fc2(x)
-        x = self.relu(x)
-        x = self.dropout(x)
-        # x = self.fc3.to('cuda')(x)
-        x = self.fc3(x)
         return x
 
 
